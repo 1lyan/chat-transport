@@ -35,7 +35,6 @@ var WebSocketServer = require('websocket').server;
 
 var connectionArray = [];
 var nextID = Date.now();
-var appendToMakeUnique = 1;
 
 // Output logging information to console
 
@@ -50,22 +49,6 @@ function log(text) {
 // the specified origin.
 function originIsAllowed(origin) {
   return true;    // We will accept all connections
-}
-
-// Scans the list of users and see if the specified name is unique. If it is,
-// return true. Otherwise, returns false. We want all users to have unique
-// names.
-function isUsernameUnique(name) {
-  var isUnique = true;
-  var i;
-
-  for (i=0; i<connectionArray.length; i++) {
-    if (connectionArray[i].username === name) {
-      isUnique = false;
-      break;
-    }
-  }
-  return isUnique;
 }
 
 // Sends a message (which is already stringified JSON) to a single
@@ -237,28 +220,7 @@ wsServer.on('request', function(request) {
 
         // Username change
         case "username":
-          var nameChanged = false;
           var origName = msg.name;
-
-          // Ensure the name is unique by appending a number to it
-          // if it's not; keep trying that until it works.
-          while (!isUsernameUnique(msg.name)) {
-            msg.name = origName + appendToMakeUnique;
-            appendToMakeUnique++;
-            nameChanged = true;
-          }
-
-          // If the name had to be changed, we send a "rejectusername"
-          // message back to the user so they know their name has been
-          // altered by the server.
-          if (nameChanged) {
-            var changeMsg = {
-              id: msg.id,
-              type: "rejectusername",
-              name: msg.name
-            };
-            connect.sendUTF(JSON.stringify(changeMsg));
-          }
 
           // Set this connection's final username and send out the
           // updated user list to all users. Yeah, we're sending a full
@@ -306,10 +268,8 @@ wsServer.on('request', function(request) {
     sendUserListToAll();
 
     // Build and output log output for close information.
-
-    var logMessage = "Connection closed: " + connection.remoteAddress + " (" +
-                     reason;
-    if (description !== null && description.length !== 0) {
+    var logMessage = "Connection closed: " + connection.remoteAddress + " (" + reason;
+    if (description) {
       logMessage += ": " + description;
     }
     logMessage += ")";
