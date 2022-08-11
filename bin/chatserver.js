@@ -30,7 +30,6 @@ var http = require('http');
 var https = require('https');
 var fs = require('fs');
 var WebSocketServer = require('websocket').server;
-let devcert = require('devcert');
 
 // Used for managing the text chat user list.
 
@@ -140,21 +139,10 @@ function sendUserListToAll() {
 var webServer = null;
 
 try {
-  devcert.certificateFor('localhost').then((ssl) => {
-    console.log('CERTS', ssl);
-    webServer = https.createServer(ssl, handleWebRequest);
-  })
+  webServer = http.createServer({}, handleWebRequest);
 } catch(err) {
   webServer = null;
-}
-
-if (!webServer) {
-  try {
-    webServer = http.createServer({}, handleWebRequest);
-  } catch(err) {
-    webServer = null;
-    log(`Error attempting to create HTTP(s) server: ${err.toString()}`);
-  }
+  log(`Error attempting to create HTTP(s) server: ${err.toString()}`);
 }
 
 
