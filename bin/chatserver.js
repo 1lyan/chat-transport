@@ -246,7 +246,6 @@ wsServer.on('request', function(request) {
         // message to them. Otherwise, send it to every user.
         if (msg.target && msg.target !== undefined && msg.target.length !== 0) {
           sendToOneUser(msg.target, msgString);
-          if(msg.from) sendToOneUser(msg.from, msgString);
         } else {
           for (i=0; i<connectionArray.length; i++) {
             connectionArray[i].sendUTF(msgString);
