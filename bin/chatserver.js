@@ -34,7 +34,7 @@ var WebSocketServer = require('websocket').server;
 // Used for managing the text chat user list.
 
 var connectionArray = [];
-var nextID = Date.now();
+var nextClientId = Date.now();
 
 // Output logging information to console
 
@@ -55,10 +55,9 @@ function originIsAllowed(origin) {
 // user, given their username. We use this for the WebRTC signaling,
 // and we could use it for private text messaging.
 function sendToOneUser(target, msgString) {
-  var isUnique = true;
   var i;
 
-  for (i=0; i<connectionArray.length; i++) {
+  for (i = 0; i < connectionArray.length; i++) {
     if (connectionArray[i].username === target) {
       connectionArray[i].sendUTF(msgString);
       break;
@@ -67,14 +66,14 @@ function sendToOneUser(target, msgString) {
 }
 
 // Scan the list of connections and return the one for the specified
-// clientID. Each login gets an ID that doesn't change during the session,
+// clientId. Each login gets an clientId that doesn't change during the session,
 // so it can be tracked across username changes.
-function getConnectionForID(id) {
+function getConnectionForClientId(clientId) {
   var connect = null;
   var i;
 
   for (i=0; i<connectionArray.length; i++) {
-    if (connectionArray[i].clientID === id) {
+    if (connectionArray[i].clientId === clientId) {
       connect = connectionArray[i];
       break;
     }
@@ -178,15 +177,15 @@ wsServer.on('request', function(request) {
   log("Connection accepted from " + connection.remoteAddress + ".");
   connectionArray.push(connection);
 
-  connection.clientID = nextID;
-  nextID++;
+  connection.clientId = nextClientId;
+  nextClientId = nextClientId + 1;
 
   // Send the new client its token; it send back a "username" message to
   // tell us what username they want to use.
 
   var msg = {
-    type: "id",
-    id: connection.clientID
+    type: "clientId",
+    clientId: connection.clientId
   };
   connection.sendUTF(JSON.stringify(msg));
 
@@ -203,7 +202,7 @@ wsServer.on('request', function(request) {
 
       var sendToClients = true;
       msg = JSON.parse(message.utf8Data);
-      var connect = getConnectionForID(msg.id);
+      var connect = getConnectionForClientId(msg.clientId);
 
       // Take a look at the incoming object and act on it based
       // on its type. Unknown message types are passed through,
